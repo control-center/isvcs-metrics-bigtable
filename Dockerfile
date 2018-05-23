@@ -50,7 +50,7 @@ RUN mkdir -p /opt/zenoss/log /opt/zenoss/etc/supervisor /opt/zenoss/var \
     && /sbin/scrub.sh
 
 # Install query service
-ENV QUERY_VERSION 0.1.30
+ENV QUERY_VERSION 0.1.28
 RUN mkdir -p /opt/zenoss/log /opt/zenoss/etc/supervisor /opt/zenoss/var \
     && wget -qO- https://zenoss-pip.s3.amazonaws.com/packages/central-query-${QUERY_VERSION}-zapp.tar.gz | tar -C /opt/zenoss -xz \
     && chmod a+x /opt/zenoss/bin/central-query.sh \
