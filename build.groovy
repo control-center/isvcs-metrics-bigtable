@@ -8,7 +8,7 @@ pipeline {
         stage('Build Image'){
             steps {
                 script {
-                    otsdbimage = docker.build("zenoss/isvcs-metrics-bigtable:v1")
+                    otsdbimage = docker.build("zenoss/isvcs-metrics-bigtable:v2")
                 }
             }
         }

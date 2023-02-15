@@ -1,16 +1,16 @@
 FROM openjdk:8-jdk
 
-RUN apt-get update && apt-get install -y autoconf make unzip gnuplot curl git && \
-    curl -f http://storage.googleapis.com/cloud-bigtable/hbase-dist/hbase-1.2.1/hbase-1.2.1-bin.tar.gz | tar zxf -  && \
+RUN apt-get update && apt-get install -y autoconf make unzip gnuplot curl git python && \
+    curl -f https://archive.apache.org/dist/hbase/1.2.1/hbase-1.2.1-bin.tar.gz | tar zxf -  && \
     mkdir -p hbase-1.2.1/lib/bigtable && \
-    curl http://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-1.2/0.9.5.1/bigtable-hbase-1.2-0.9.5.1.jar \
+    curl https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-1.2/0.9.5.1/bigtable-hbase-1.2-0.9.5.1.jar \
       -f -o hbase-1.2.1/lib/bigtable/bigtable-hbase-1.2-0.9.5.1.jar && \
-    curl http://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/1.1.33.Fork19/netty-tcnative-boringssl-static-1.1.33.Fork19.jar \
+    curl https://repo1.maven.org/maven2/io/netty/netty-tcnative-boringssl-static/1.1.33.Fork19/netty-tcnative-boringssl-static-1.1.33.Fork19.jar \
       -f -o hbase-1.2.1/lib/netty-tcnative-boringssl-static-1.1.33.Fork19.jar && \
     echo 'export HBASE_CLASSPATH="$HBASE_HOME/lib/bigtable/bigtable-hbase-1.2-0.9.5.1.jar:$HBASE_HOME/lib/netty-tcnative-boringssl-static-1.1.33.Fork19.jar"' >> /hbase-1.2.1/conf/hbase-env.sh && \
     echo 'export HBASE_OPTS="${HBASE_OPTS} -Xms1024m -Xmx2048m"' >> /hbase-1.2.1/conf/hbase-env.sh
 
-RUN git clone --depth 1 --single-branch --branch v2.3.0 https://github.com/OpenTSDB/opentsdb.git && \
+RUN git clone --depth 1 --single-branch --branch v2.4.1 https://github.com/OpenTSDB/opentsdb.git && \
     rm -rf /opentsdb/tools/docker && \
     mkdir -p /opentsdb/build/ && \
     echo "updating to use 0.3.0 of asyncbigtable" && \
@@ -32,8 +32,13 @@ COPY --from=0 /opentsdb /opentsdb
 
 RUN ln -s /hbase-1.2.1 /opt/hbase && ln -s /opentsdb /opt/opentsdb && \
     mkdir -p /opt/zenoss/var /opt/zenoss/log /opt/zenoss/etc/opentsdb && \
-    yum -y --setopt=tsflags="nodocs" install make && /sbin/scrub.sh
+    yum -y --setopt=tsflags="nodocs" install make gcc-c++ pcre-static pcre-devel && \
+    curl -f http://nginx.org/download/nginx-1.21.0.tar.gz | tar zxf -  && \
+    cd nginx-1.21.0 && \
+    ./configure --prefix=/var/www/html --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log --with-pcre  --lock-path=/var/lock/nginx.lock --pid-path=/var/run/nginx.pid --modules-path=/etc/nginx/modules --with-http_v2_module --with-stream=dynamic --with-http_addition_module --without-http_gzip_module && \
+    make && make install && /sbin/scrub.sh
 
+COPY nginx_proxy.conf /etc/nginx/nginx.conf
 COPY supervisor.conf /opt/zenoss/etc/supervisor.conf
 COPY start-opentsdb-client.sh /opt/zenoss/
 COPY modify-consumer-config.sh modify-query-config.sh /var/

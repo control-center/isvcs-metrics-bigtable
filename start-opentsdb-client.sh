@@ -29,8 +29,10 @@ if [ -f "$OPENTSDB_RESOURCE/otsdb.env" ]; then
     . "$OPENTSDB_RESOURCE/otsdb.env"
 fi
 
+echo "Starting nginx..."
+nginx
 
 # start opentsdb
 export JVMARGS="${TSDB_JAVA_MEM_MB} -XX:+ExitOnOutOfMemoryError -enableassertions -enablesystemassertions"
 
-exec /opt/opentsdb/build/tsdb tsd --config /opt/zenoss/etc/opentsdb/opentsdb.conf
+exec /opt/opentsdb/build/tsdb tsd --port=4343 --config /opt/zenoss/etc/opentsdb/opentsdb.conf
